@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" href="css/js-github-user.css">
+	<script src="https://blueimp.github.io/JavaScript-Templates/js/tmpl.min.js"></script>
+</head>
+<body>
+	<div class="app">
+		<form action="">
+			<input placeholder="Who are you looking for?" id='username'>
+			<input type="button" value='Search' id='search'>
+		</form>
+		<div class="profile">
+			<script type='text/x-tmpl' id='template'>
+				<div class="header">
+				<div class="avatar"></div>
+				<h2 class='name'>{%= o.name %}</h2>
+				<h3 class="location">{%= o.location %}</h3>
+			</div>
+			<div class="footer">
+				<ul class="details">
+					<li>Repositories <span>{%= o.public_repos %}</span></li>
+					<li>Followers <span>{%= o.followers %}</span></li>
+					<li>Following <span>{%= o.following %}</span></li>
+				</ul>
+				<a href="{%= o.html_url %}" class='to-github'>go to github</a>
+			</div>
+			</script>
+			<script>
+				window.onload = getData('octocat')
+
+function render(container, data) {
+    container.innerHTML = tmpl('template', data)
+    container.style.setProperty('--avatar', `url(${data.avatar_url})`)
+}
+
+function getData(username) {
+    let apiUrl = `https://api.github.com/users/${username}`
+    fetch(apiUrl)
+        .then(function(response) {
+            if(response.status != 200) {
+                throw new Error(response.statusText)
+            }
+            return response.json()
+        })
+        .then(update)
+        .catch(alert)
+}
+
+document.getElementById('search').addEventListener('click', () => {
+    let username = document.getElementById('username').value.replace(/[ ]/g, '')
+    if (username == '') {
+        return
+    }
+    getData(username)
+})
+
+function update(data) {
+    let current = document.getElementsByClassName('profile')[0]
+    let isInitial = (current.innerHTML == '')
+
+    if (isInitial) {
+        render(current, data)
+        return
+    }
+
+    // create a new card
+    let next = document.createElement('div')
+    next.className = 'profile'
+    next.style.left = '100%'
+    render(next, data)
+    current.after(next)
+
+    // define animation properties
+    let animationOut = {
+        keyframes: [
+            {left: '0', opacity: 1, offset: 0},
+            {left: '-100%', opacity: 0, offset: 1}
+        ],
+        options: {
+            duration: 500,
+            fill: 'forwards'
+        }
+    }
+
+    let animationIn = {
+        keyframes: [
+            {left: '100%', opacity: 0, offset: 0},
+            {left: '0', opacity: 1, offset: 1}
+        ],
+        options: {
+            duration: 500,
+            fill: 'forwards',
+            delay: 500
+        }
+    }
+
+    // animate the out animation first,
+    // then animate the in animation
+    let anime = current.animate(animationOut.keyframes, animationOut.options)
+    anime.onfinish = () => {
+        current.remove()
+        next.animate(animationIn.keyframes, animationIn.options)
+    }
+}
+
+function alert(error) {
+    let keyframes = [
+        {left: '100%', offset: 0},
+        {left: '50%', offset: 0.2},
+        {left: '50%', offset: 0.8},
+        {left: '100%', offset: 1},
+    ]
+
+    let options = {
+        duration: 2000,
+        fill: 'forwards',
+    }
+
+    let element = document.getElementsByClassName('alert')[0]
+    element.innerText = error.message
+    element.animate(keyframes, options)
+}
+
+			</script>
+		</div>
+	</div>
+</body>
+</html> 
